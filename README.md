@@ -29,7 +29,20 @@ than one instance in a test-suite.
 
 This is analogous to e.g. `$_SESSION['ShoppingCart'] = new ShoppingCart()`, but
 eliminates the unsafe use of arrays and strings, the need to test if the session
-variable is already set, and so on.
+variable is already set, the need to type-hint when reading from `$_SESSION`, and
+so on.
+
+
+#### Implementation
+
+You should create `SessionService` centrally (usually in a DI container) and
+expose it to consumers (usually controllers) as `SessionContainer`, which is
+the public portion of the interface. The internal portion of the interface
+includes the `commit()` method, which should be called centrally, as part of
+your request/response pipeline (middleware, framework or front controller),
+e.g. immediately after the controller has been dispatched, before you emit
+the response.
+
 
 #### Example
 

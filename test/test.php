@@ -1,6 +1,6 @@
 <?php
 
-use mindplay\stately\SessionContainer;
+use mindplay\stately\SessionService;
 use mindplay\stately\SessionFileStorage;
 use Zend\Diactoros\Response;
 use Zend\Diactoros\ServerRequest;
@@ -48,7 +48,7 @@ test(
         $request = new ServerRequest([], [], $URL, $METHOD);
         $response = new Response();
 
-        $container = new SessionContainer($request, $storage, $COOKIE_NAME);
+        $container = new SessionService($request, $storage, $COOKIE_NAME);
 
         $same_response = $container->commit($response);
 
@@ -70,7 +70,7 @@ test(
         $request = new ServerRequest([], [], $URL, $METHOD);
         $response = new Response();
 
-        $container = new SessionContainer($request, $storage, $COOKIE_NAME);
+        $container = new SessionService($request, $storage, $COOKIE_NAME);
 
         $container->update(function (ActiveUser $user) {
             $user->user_id = 123;
@@ -94,7 +94,7 @@ test(
 
         $request = $request->withCookieParams(array($COOKIE_NAME => $session_id));
 
-        $container = new SessionContainer($request, $storage, $COOKIE_NAME);
+        $container = new SessionService($request, $storage, $COOKIE_NAME);
 
         $got_user_id = null;
 
