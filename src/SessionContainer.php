@@ -136,7 +136,7 @@ class SessionContainer
             $type = $param->getClass()->getName();
 
             if (!isset($this->cache[$type])) {
-                // auto-construct the request session model:
+                // auto-construct the requested session model:
 
                 $this->cache[$type] = new $type();
             }
@@ -187,6 +187,10 @@ class SessionContainer
      */
     public function commit(ResponseInterface $response)
     {
+        if (session_status() === PHP_SESSION_ACTIVE) {
+            trigger_error('PHP standard session management is in use', E_USER_WARNING);
+        }
+
         $data = $this->serialize($this->cache);
 
         if ($this->session_id || $data) {
