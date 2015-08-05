@@ -36,10 +36,16 @@ class SessionFileStorage implements SessionStorage
     private $files = array();
 
     /**
-     * @param string|null $root_path absolute root path (or NULL to use INI setting)
-     * @param int|null $path_levels number of path levels (or NULL to use INI setting)
+     * @var int permission mask for created files
      */
-    public function __construct($root_path = null, $path_levels = null)
+    private $file_mode;
+
+    /**
+     * @param string|null $root_path       absolute root path (or NULL to use INI setting)
+     * @param int         $file_mode permission mask for created session files
+     * @param int|null    $path_levels     number of path levels (or NULL to use INI setting)
+     */
+    public function __construct($root_path = null, $file_mode = 0666, $path_levels = null)
     {
         if ($root_path === null || $path_levels === null) {
             $parts = explode(';', ini_get('session.save_path'), 2);
@@ -52,13 +58,14 @@ class SessionFileStorage implements SessionStorage
 
             if ($path_levels === null) {
                 $path_levels = count($parts) === 2
-                    ? (int) $parts[0]
+                    ? (int)$parts[0]
                     : 0;
             }
         }
 
         $this->root_path = $root_path;
         $this->path_levels = $path_levels;
+        $this->file_mode = $file_mode;
     }
 
     /**
@@ -71,6 +78,11 @@ class SessionFileStorage implements SessionStorage
         }
 
         $path = $this->getPath($session_id);
+        $dir = dirname($path);
+
+        if (!is_dir($dir) || !is_writable($dir)) {
+            throw new RuntimeException("file permission issue - unable to write to dir: {$path}");
+        }
 
         $file = @fopen($path, 'c+');
 
@@ -78,14 +90,24 @@ class SessionFileStorage implements SessionStorage
             throw new RuntimeException("unable to open session file: {$path}");
         }
 
+        $mode_set = @chmod($path, $this->file_mode & ~umask()) !== false;
+
+        if (!$mode_set) {
+            throw new RuntimeException("unable to change mode of session file: {$path}");
+        }
+
         if (!flock($file, LOCK_EX)) {
-            trigger_error("unable to acquire session file lock: {$path}", E_USER_WARNING);
+            trigger_error("unable to lock session file: {$path}", E_USER_WARNING);
         }
 
         $data = @stream_get_contents($file);
 
         if ($data === false) {
             throw new RuntimeException("unable to read session file: {$path}");
+        }
+
+        if ($data === '') {
+            $data = null;
         }
 
         $this->sessions[$session_id] = $data;
@@ -130,7 +152,7 @@ class SessionFileStorage implements SessionStorage
         $paths = new RegexIterator(
             new RecursiveIteratorIterator(
                 new RecursiveDirectoryIterator(
-                    __DIR__,
+                    $this->root_path,
                     FilesystemIterator::CURRENT_AS_PATHNAME | FilesystemIterator::SKIP_DOTS
                 )
             ),
@@ -142,7 +164,7 @@ class SessionFileStorage implements SessionStorage
         foreach ($paths as $path) {
             $age = $now - filemtime($path);
 
-            if ($age > $gc_maxlifetime) {
+            if ($age >= $gc_maxlifetime) {
                 @unlink($path);
             }
         }
@@ -158,7 +180,7 @@ class SessionFileStorage implements SessionStorage
         $path = $this->root_path;
 
         if ($this->path_levels > 0) {
-            for ($i=0; $i<$this->path_levels; $i++) {
+            for ($i = 0; $i < $this->path_levels; $i++) {
                 $path .= '/' . substr($session_id, $i, 1);
             }
         }

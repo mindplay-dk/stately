@@ -7,7 +7,6 @@ use OutOfRangeException;
 use Psr\Http\Message\ResponseInterface;
 use ReflectionFunction;
 use Psr\Http\Message\ServerRequestInterface;
-use UnexpectedValueException;
 
 /**
  * This class implements a type-safe session model container.
@@ -197,7 +196,7 @@ class SessionContainer
                 $response = $response->withHeader('Set-Cookie', "{$this->cookie_name}={$this->session_id}; Path=/; HttpOnly");
             }
 
-            $this->storage->write($this->session_id, $data);
+            $this->storage->write($this->session_id, $data, $this->gc_maxlifetime);
         }
 
         if (mt_rand(1, $this->gc_divisor) <= $this->gc_probability) {

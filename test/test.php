@@ -1,6 +1,7 @@
 <?php
 
 use mindplay\stately\SessionContainer;
+use mindplay\stately\SessionFileStorage;
 use Zend\Diactoros\Response;
 use Zend\Diactoros\ServerRequest;
 
@@ -21,7 +22,7 @@ test(
 
         eq($storage->read($ID), null, 'returns NULL for undefined value');
 
-        $storage->write($ID, $DATA);
+        $storage->write($ID, $DATA, 60);
 
         eq($storage->read($ID), $DATA, 'can read data');
 
@@ -116,7 +117,34 @@ test(
 test(
     'can use file-system storage',
     function () {
-        #$f = new \mindplay\stately\SessionFileStorage(__DIR__ . '/build/');
+        $SESSION_ID = '9f303fa8-3da2-432b-af20-1cb458ad3f3d';
+        $EXPECTED_PATH = __DIR__ . '/build/' . $SESSION_ID . '.' . SessionFileStorage::SESSION_FILE_EXT;
+        $SAMPLE_DATA = serialize(['Foo' => ['bar','baz']]);
+
+        if (file_exists($EXPECTED_PATH)) {
+            unlink($EXPECTED_PATH);
+        }
+
+        ok(!file_exists($EXPECTED_PATH), 'pre-condition: no file left behind from previous test run');
+
+        $f = new SessionFileStorage(__DIR__ . '/build');
+
+        $content = $f->read($SESSION_ID);
+
+        eq($content, null, 'read() returns NULL for new session ID');
+        ok(file_exists($EXPECTED_PATH), 'session file has been created');
+
+        $f->write($SESSION_ID, $SAMPLE_DATA, 60);
+
+        ok(filesize($EXPECTED_PATH) === strlen($SAMPLE_DATA), 'data has been written');
+
+        $f->gc(60);
+
+        ok(file_exists($EXPECTED_PATH), 'fresh file was not garbage-collected');
+
+        $f->gc(0);
+
+        ok(!file_exists($EXPECTED_PATH), 'stale file was garbage-collected');
     }
 );
 
