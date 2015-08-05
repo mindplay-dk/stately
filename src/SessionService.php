@@ -140,7 +140,7 @@ class SessionService implements SessionContainer
             $args[] = $this->cache[$type];
         }
 
-        call_user_func_array($func, $args);
+        return call_user_func_array($func, $args);
     }
 
     /**
@@ -182,6 +182,8 @@ class SessionService implements SessionContainer
         if ($this->session_id || $data) {
             if ($this->session_id === null) {
                 $this->session_id = $this->createSessionID();
+
+                $this->storage->read($this->session_id); // acquire lock!
 
                 $response = $response->withHeader('Set-Cookie', "{$this->cookie_name}={$this->session_id}; Path=/; HttpOnly");
             }

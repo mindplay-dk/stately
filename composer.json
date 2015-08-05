@@ -21,6 +21,8 @@
     "require-dev": {
         "phpunit/php-code-coverage": "2.*@dev",
         "mindplay/testies": "dev-master",
-        "zendframework/zend-diactoros": "~1"
+        "zendframework/zend-diactoros": "~1",
+        "zendframework/zend-stratigility": "~1",
+        "guzzlehttp/guzzle": "~6"
     }
 }

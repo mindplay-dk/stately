@@ -12,9 +12,9 @@ interface SessionContainer
     /**
      * Access one or more objects in this container.
      *
-     * @param Closure $func function(MyType $object...) : void
+     * @param Closure $func function(MyType $object...) : mixed
      *
-     * @return void
+     * @return mixed any value returned by the given function
      */
     public function update(Closure $func);
 

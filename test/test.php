@@ -1,9 +1,14 @@
 <?php
 
+use GuzzleHttp\Client;
 use mindplay\stately\SessionService;
 use mindplay\stately\SessionFileStorage;
+use mindplay\testies\TestServer;
 use Zend\Diactoros\Response;
 use Zend\Diactoros\ServerRequest;
+
+const TESTSERVER_HOST = '127.0.0.1';
+const TESTSERVER_PORT = 8081;
 
 require dirname(__DIR__) . '/vendor/autoload.php';
 
@@ -145,6 +150,25 @@ test(
         $f->gc(0);
 
         ok(!file_exists($EXPECTED_PATH), 'stale file was garbage-collected');
+    }
+);
+
+test(
+    'integration test: can maintain session state',
+    function () {
+        $server = new TestServer(__DIR__ . '/scripts', TESTSERVER_PORT, TESTSERVER_HOST);
+
+        $client = new Client(['cookies' => true]);
+
+        $response = $client->get("http://" . TESTSERVER_HOST . ":" . TESTSERVER_PORT . "/set_session.php");
+
+        eq($response->getBody()->getContents(), 'Logged in! ;-)');
+
+        ok(fnmatch('SESSION=*', $response->getHeaderLine('Set-Cookie')), 'the SESSION cookie was set');
+
+        $response = $client->get("http://" . TESTSERVER_HOST . ":" . TESTSERVER_PORT . "/get_session.php");
+
+        eq($response->getBody()->getContents(), 'Active User: 123');
     }
 );
 
