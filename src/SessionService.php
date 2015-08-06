@@ -131,13 +131,18 @@ class SessionService implements SessionContainer
         foreach ($params as $param) {
             $type = $param->getClass()->getName();
 
-            if (!isset($this->cache[$type])) {
+            if (isset($this->cache[$type])) {
+                $value = $this->cache[$type];
+            } elseif ($param->isOptional()) {
+                $value = $param->getDefaultValue();
+            } else {
                 // auto-construct the requested session model:
 
-                $this->cache[$type] = new $type();
+                $value = new $type();
+                $this->cache[$type] = $value;
             }
 
-            $args[] = $this->cache[$type];
+            $args[] = $value;
         }
 
         return call_user_func_array($func, $args);

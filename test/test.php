@@ -77,9 +77,27 @@ test(
 
         $container = new SessionService($request, $storage, $COOKIE_NAME);
 
+        $got_null = false;
+
+        $container->update(function (ActiveUser $user = null) use (&$got_null) {
+            $got_null = ($user === null);
+        });
+
+        ok($got_null, 'should skip optional argument');
+
+        eq($container->commit($response)->getHeader('Set-Cookie'), [], 'does not append useless cookie');
+
         $container->update(function (ActiveUser $user) {
             $user->user_id = 123;
         });
+
+        $got_something = false;
+
+        $container->update(function (ActiveUser $user = null) use (&$got_something) {
+            $got_something = ($user !== null);
+        });
+
+        ok($got_something, 'does not skip optional session model, when that model is available');
 
         $new_response = $container->commit($response);
 
