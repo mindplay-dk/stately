@@ -32,6 +32,17 @@ eliminates the unsafe use of arrays and strings, the need to test if the session
 variable is already set, the need to type-hint when reading from `$_SESSION`, and
 so on.
 
+If you don't want to auto-create a missing model, you can type-hint the argument
+as e.g. `ShoppingCart $cart = null` - of course, this implies you're going to
+handle a missing `$cart` in your callback with an `if`-statement.
+
+Also note, it's possible to use multiple arguments to obtain multiple session
+models in a single call.
+
+You can also `remove()` session models from the current session, or `clear()` the
+entire contents of the container - see the [SessionContainer](src/SessionContainer.php)
+interface for documentation.
+
 
 #### Implementation
 

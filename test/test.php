@@ -91,10 +91,8 @@ test(
             $user->user_id = 123;
         });
 
-        $got_something = false;
-
-        $container->update(function (ActiveUser $user = null) use (&$got_something) {
-            $got_something = ($user !== null);
+        $got_something = $container->update(function (ActiveUser $user = null) {
+            return ($user !== null);
         });
 
         ok($got_something, 'does not skip optional session model, when that model is available');
