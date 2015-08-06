@@ -1,5 +1,5 @@
 {
-    "name": "mindplay/stateful",
+    "name": "mindplay/stately",
     "type": "library",
     "description": "Session abstraction for PSR-7",
     "license": "LGPL-3.0+",
